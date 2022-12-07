@@ -1,0 +1,14 @@
+{
+    "python.formatting.provider": "black",
+    "python.formatting.blackArgs": [
+        "--line-length=120"
+    ],
+    "editor.minimap.enabled": false,
+    "editor.rulers": [
+        {
+          "column": 120,
+          "color": "#333333"
+        }
+      ],
+     "jupyter.sendSelectionToInteractiveWindow": true
+}

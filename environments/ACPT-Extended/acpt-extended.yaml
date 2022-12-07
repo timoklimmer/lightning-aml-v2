@@ -1,0 +1,6 @@
+$schema: https://azuremlschemas.azureedge.net/latest/environment.schema.json
+
+# note: this can be an arbitrary name
+name: ACPT-Extended
+build:
+  path: docker-context
