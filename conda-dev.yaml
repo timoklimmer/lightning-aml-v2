@@ -17,3 +17,4 @@ dependencies:
     - torchmetrics==0.11.0
     - torchtext==0.14.0
     - torchvision==0.14.0
+    - azureml-fsspec
