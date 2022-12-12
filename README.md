@@ -4,7 +4,7 @@ Demonstrates the use of PyTorch Lightning on Azure Machine Learning (CLI v2).
 
 ![Azure ML Screenshot](./repo/media/aml-screenshot.png)
 
-More detailed instructions will be added here later, but the rough steps to use this repo are:
+Usage:
 
 1. Get an Azure ML workspace.
 
