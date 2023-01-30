@@ -1,5 +1,6 @@
 import argparse
 import inspect
+import json
 import os
 import sys
 
@@ -9,7 +10,7 @@ import torch
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.callbacks import TQDMProgressBar
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
-from pytorch_lightning.strategies import StrategyRegistry
+from pytorch_lightning.strategies import DeepSpeedStrategy, StrategyRegistry
 
 from utils.codetimer import CodeTimer
 from utils.dynamic_class_loading import (
@@ -103,6 +104,17 @@ if not is_compute_cluster:
 ensure_data_module_class_exists(args.data_module)
 ensure_model_class_exists(args.model)
 
+# use custom DeepSpeed configuration when available
+effective_strategy = args.training_strategy
+if args.training_strategy == "deepspeed" and os.path.exists("ds_config.json"):
+    with open("ds_config.json") as deepspeed_config_file:
+        deepspeed_config = json.load(deepspeed_config_file)
+    print("ds_config.json")
+    print("--------------")
+    print(json.dumps(deepspeed_config, indent=4))
+    print("")
+    effective_strategy = DeepSpeedStrategy(config=deepspeed_config)
+
 # setup trainer
 with CodeTimer("Set up trainer"):
     trainer = pl.Trainer(
@@ -110,7 +122,7 @@ with CodeTimer("Set up trainer"):
         num_nodes=number_nodes,
         devices=number_devices_per_node,
         max_epochs=args.max_epochs,
-        strategy=args.training_strategy,
+        strategy=effective_strategy,
         logger=pl_loggers.TensorBoardLogger(save_dir=("outputs" if is_compute_cluster else "@logs")),
         callbacks=[
             TQDMProgressBar(refresh_rate=args.progress_bar_refresh_rate),

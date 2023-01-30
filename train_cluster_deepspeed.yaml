@@ -19,6 +19,9 @@ inputs:
     #       deepspeed_config = { "steps_per_print": 50, ... }
     #       strategy = pl.strategies.DeepSpeedStrategy(config=deepspeed_config)
     #       trainer = pl.Trainer(strategy=strategy,...)
+    # - in this example, you can simply place a ds_config.json file to configure DeepSpeed. if no ds_config.json is
+    #   provided, default values will be used.
+    # - note that there are also built-in variations of the DeepSpeed strategy, eg. deepspeed_stage_3
     training_strategy: deepspeed
 
     # maximum number of epochs
