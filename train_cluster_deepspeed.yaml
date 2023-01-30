@@ -15,6 +15,10 @@ inputs:
     # - see https://pytorch-lightning.readthedocs.io/en/stable/extensions/strategy.html#id1 to get an idea of the
     #   available strategies
     # - for a full list of available strategies, run python train.py --help
+    # - to use a custom DeepSpeed configuration, overwrite it in the training script like so:
+    #       deepspeed_config = { "steps_per_print": 50, ... }
+    #       strategy = pl.strategies.DeepSpeedStrategy(config=deepspeed_config)
+    #       trainer = pl.Trainer(strategy=strategy,...)
     training_strategy: deepspeed
 
     # maximum number of epochs
