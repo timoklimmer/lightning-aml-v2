@@ -18,3 +18,5 @@ dependencies:
     - torchtext==0.14.0
     - torchvision==0.14.0
     - azureml-fsspec
+
+# run "pip uninstall nvidia_cublas_cu11" in environment when getting OSError: /anaconda/envs/laml/lib/python3.9/site-packages/torch/lib/../../nvidia/cublas/lib/libcublas.so.11: undefined symbol: cublasLtGetStatusString, version libcublasLt.so.11
