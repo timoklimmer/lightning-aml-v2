@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "train.py",
+            "name": "Debug train.py",
             "type": "python",
             "request": "launch",
             "program": "train.py",
@@ -19,7 +19,7 @@
                 "--training-strategy",
                 "ddp_find_unused_parameters_false",
                 "--max-epochs",
-                "100"
+                "2"
             ]
         }
     ]
