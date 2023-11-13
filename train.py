@@ -49,9 +49,16 @@ parser.add_argument(
     help="Training strategy for Lightning.",
 )
 # -- max-epochs
-parser.add_argument("--max-epochs", type=int, default=10, help="Maximum number of epochs to train.")
+parser.add_argument(
+    "--max-epochs", type=int, default=10, help="Maximum number of epochs to train."
+)
 # -- progress-bar-refresh-rate
-parser.add_argument("--progress-bar-refresh-rate", default=100, type=int, help="Refresh rate for training progress bar")
+parser.add_argument(
+    "--progress-bar-refresh-rate",
+    default=100,
+    type=int,
+    help="Refresh rate for training progress bar",
+)
 args = parser.parse_args()
 
 
@@ -59,7 +66,9 @@ args = parser.parse_args()
 # number of nodes
 number_nodes = int(os.environ.get("AZUREML_NODE_COUNT", 1))
 # number of GPUs/"devices" per node
-number_devices_per_node = int(os.environ.get("AZ_BATCHAI_GPU_COUNT", torch.cuda.device_count()))
+number_devices_per_node = int(
+    os.environ.get("AZ_BATCHAI_GPU_COUNT", torch.cuda.device_count())
+)
 # are we running in a Compute Cluster?
 is_compute_cluster = "AZUREML_RUN_ID" in os.environ
 # are we running on the head node?
@@ -123,7 +132,9 @@ with CodeTimer("Set up trainer"):
         devices=number_devices_per_node,
         max_epochs=args.max_epochs,
         strategy=effective_strategy,
-        logger=pl_loggers.TensorBoardLogger(save_dir=("outputs" if is_compute_cluster else "@logs")),
+        logger=pl_loggers.TensorBoardLogger(
+            save_dir=("outputs" if is_compute_cluster else "@logs")
+        ),
         callbacks=[
             TQDMProgressBar(refresh_rate=args.progress_bar_refresh_rate),
             EarlyStopping(monitor="val_loss", mode="min", patience=10),
@@ -142,7 +153,11 @@ with CodeTimer("Set up data module"):
 # setup model
 with CodeTimer("Set up model"):
     model_class = get_model_class(args.model)
-    model = model_class(args) if "args" in inspect.signature(model_class.__init__).parameters else model_class()
+    model = (
+        model_class(args)
+        if "args" in inspect.signature(model_class.__init__).parameters
+        else model_class()
+    )
 
 # train model
 with mlflow.start_run() as run:
