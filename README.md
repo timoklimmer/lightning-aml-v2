@@ -1,4 +1,4 @@
-# Lightning on Azure Machine Learning v2
+# Lightning on Azure Machine Learning v2 using Nebula checkpoints
 
 Demonstrates the use of PyTorch Lightning on Azure Machine Learning (CLI v2).
 
@@ -24,14 +24,13 @@ Usage:
    - when submitting a job to Azure ML, you may need to adjust the corresponding `train_*.yaml` file before. especially,
      you may also need to create an Azure ML compute cluster and/or create a custom environment.
 
-5. Either run the `train_local_ddp_no_debug.sh` script from a terminal to train a model locally, or run any of the
-   `train_*.yaml` files by clicking the Azure ML icon on top right in VS.Code to train a model in AzureML. Note that you
+5. Run any of the `train_*.yaml` files by clicking the Azure ML icon on top right in VS.Code to train a model in AzureML. Note that you
    need the Azure Machine Learning extension installed in VS.Code to make this button available. Alternatively, run a
    `az ml job create -g <resource_group> -w <workspace> --file <yaml file> --stream` command in your command line. To
    debug, you can use VS.Code's launch configurations, e. g. `Debug local DDP`.
 
 7. Open Azure ML Studio / Jobs and watch the training job progress.
 
-The code provided uses mlflow autologging.
+The code provided uses mlflow autologging and [Nebula checkpointing](https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/machine-learning/reference-checkpoint-performance-for-large-models.md).
 
 As always, feel free to use but don't blame me/us if things go wrong.

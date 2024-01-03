@@ -36,7 +36,7 @@ distribution:
     type: pytorch
 
     # IMPORTANT: set this value to the number of GPUs per device (depends on your VM size)
-    process_count_per_instance: 2
+    process_count_per_instance: 1
 
 # environment in which the command above should be run in
 # note: It is recommended to use an environment which either is the ACPT image or at least inherits from it. The ACPT
@@ -45,7 +45,7 @@ distribution:
 #       https://learn.microsoft.com/en-us/azure/machine-learning/concept-environments
 #
 # for the latest ACPT image using PyTorch 1.12, CUDA 11.6 on Python 3.9
-environment: azureml:AzureML-ACPT-pytorch-1.12-py39-cuda11.6-gpu@latest
+environment: azureml:AzureML-ACPT-pytorch-1.13-py38-cuda11.7-gpu@latest
 # for a specific version
 #environment: azureml:AzureML-ACPT-pytorch-1.12-py39-cuda11.6-gpu:3
 # for the latest version of a custom environment:

@@ -2,3 +2,4 @@ __pycache__
 .git
 @logs
 @data_cache
+train_local_ddp_no_debug.sh

@@ -7,7 +7,9 @@ import sys
 import mlflow
 import pytorch_lightning as pl
 import torch
+import nebulaml as nm
 from pytorch_lightning import loggers as pl_loggers
+from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.callbacks import TQDMProgressBar
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.strategies import DeepSpeedStrategy, StrategyRegistry
@@ -115,31 +117,38 @@ ensure_model_class_exists(args.model)
 
 # use custom DeepSpeed configuration when available
 effective_strategy = args.training_strategy
+trainer_config = {
+    "accelerator": "gpu",
+    "num_nodes": number_nodes,
+    "devices": number_devices_per_node,
+    "max_epochs": args.max_epochs,
+    "logger": pl_loggers.TensorBoardLogger(
+        save_dir=("outputs" if is_compute_cluster else "@logs")),
+    "callbacks": [
+        TQDMProgressBar(refresh_rate=args.progress_bar_refresh_rate),
+        EarlyStopping(monitor="val_loss", mode="min", patience=10),
+    ]
+}
+    
 if args.training_strategy == "deepspeed" and os.path.exists("ds_config.json"):
     with open("ds_config.json") as deepspeed_config_file:
         deepspeed_config = json.load(deepspeed_config_file)
+        deepspeed_config['nebula']['persistent_storage_path'] = os.path.abspath(deepspeed_config['nebula']['persistent_storage_path'])
     print("ds_config.json")
     print("--------------")
     print(json.dumps(deepspeed_config, indent=4))
     print("")
-    effective_strategy = DeepSpeedStrategy(config=deepspeed_config)
-
-# setup trainer
+    trainer_config["strategy"] = nm.NebulaDeepspeedStrategy(config=deepspeed_config)
+    trainer_config["callbacks"].append(ModelCheckpoint(filename="{epoch}", every_n_epochs=10))
+else:
+    config_params = dict()  
+    config_params["persistent_storage_path"] = os.path.abspath("./outputs")  
+    config_params["persistent_time_interval"] = 100
+    trainer_config["strategy"] = effective_strategy
+    trainer_config["callbacks"].append(nm.NebulaCallback(config_params=config_params))
+    trainer_config["plugins"] = [nm.NebulaCheckpointIO()]
 with CodeTimer("Set up trainer"):
-    trainer = pl.Trainer(
-        accelerator="gpu",
-        num_nodes=number_nodes,
-        devices=number_devices_per_node,
-        max_epochs=args.max_epochs,
-        strategy=effective_strategy,
-        logger=pl_loggers.TensorBoardLogger(
-            save_dir=("outputs" if is_compute_cluster else "@logs")
-        ),
-        callbacks=[
-            TQDMProgressBar(refresh_rate=args.progress_bar_refresh_rate),
-            EarlyStopping(monitor="val_loss", mode="min", patience=10),
-        ],
-    )
+    trainer = pl.Trainer(**trainer_config)
 
 # setup data module
 with CodeTimer("Set up data module"):
