@@ -61,6 +61,8 @@ parser.add_argument(
     type=int,
     help="Refresh rate for training progress bar",
 )
+parser.add_argument("--input_dataset", type=str, help="Path to the dataset")
+parser.add_argument("--batch_size", type=int, default=32, help="Batch size")
 args = parser.parse_args()
 
 
@@ -123,26 +125,31 @@ trainer_config = {
     "devices": number_devices_per_node,
     "max_epochs": args.max_epochs,
     "logger": pl_loggers.TensorBoardLogger(
-        save_dir=("outputs" if is_compute_cluster else "@logs")),
+        save_dir=("outputs" if is_compute_cluster else "@logs")
+    ),
     "callbacks": [
         TQDMProgressBar(refresh_rate=args.progress_bar_refresh_rate),
-        EarlyStopping(monitor="val_loss", mode="min", patience=10),
-    ]
+        EarlyStopping(monitor="val_loss", mode="min", patience=30),
+    ],
 }
-    
+
 if args.training_strategy == "deepspeed" and os.path.exists("ds_config.json"):
     with open("ds_config.json") as deepspeed_config_file:
         deepspeed_config = json.load(deepspeed_config_file)
-        deepspeed_config['nebula']['persistent_storage_path'] = os.path.abspath(deepspeed_config['nebula']['persistent_storage_path'])
+        deepspeed_config["nebula"]["persistent_storage_path"] = os.path.abspath(
+            deepspeed_config["nebula"]["persistent_storage_path"]
+        )
     print("ds_config.json")
     print("--------------")
     print(json.dumps(deepspeed_config, indent=4))
     print("")
     trainer_config["strategy"] = nm.NebulaDeepspeedStrategy(config=deepspeed_config)
-    trainer_config["callbacks"].append(ModelCheckpoint(filename="{epoch}", every_n_epochs=10))
+    trainer_config["callbacks"].append(
+        ModelCheckpoint(filename="{epoch}", every_n_epochs=10)
+    )
 else:
-    config_params = dict()  
-    config_params["persistent_storage_path"] = os.path.abspath("./outputs")  
+    config_params = dict()
+    config_params["persistent_storage_path"] = os.path.abspath("./outputs")
     config_params["persistent_time_interval"] = 100
     trainer_config["strategy"] = effective_strategy
     trainer_config["callbacks"].append(nm.NebulaCallback(config_params=config_params))
@@ -153,20 +160,23 @@ with CodeTimer("Set up trainer"):
 # setup data module
 with CodeTimer("Set up data module"):
     data_module_class = get_data_module_class(args.data_module)
-    data_module = (
-        data_module_class(args)
-        if "args" in inspect.signature(data_module_class.__init__).parameters
-        else data_module_class()
-    )
+    if hasattr(args, "input_dataset") and args.input_dataset:
+        data_module = data_module_class(
+            input_dataset=args.input_dataset, batch_size=args.batch_size
+        )
+    # using built-in datasets
+    elif args.data_module == "MNIST":
+        data_module = data_module_class()
+    else:
+        raise ValueError("Please provide the file path argument for the dataset.")
 
 # setup model
 with CodeTimer("Set up model"):
     model_class = get_model_class(args.model)
-    model = (
-        model_class(args)
-        if "args" in inspect.signature(model_class.__init__).parameters
-        else model_class()
-    )
+    # Check if there are additional arguments to pass to the model class
+    model_args = vars(args) if hasattr(args, "model_args") and args.model_args else {}
+    # Instantiate the model with or without arguments based on the condition
+    model = model_class(**model_args) if model_args else model_class()
 
 # train model
 with mlflow.start_run() as run:

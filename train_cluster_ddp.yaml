@@ -6,10 +6,13 @@ experiment_name: pl-ddp
 # several input parameters for your training job
 inputs:
     # name of the model, ensure that there is a corresponding Python script in folder 'models'
-    model: ImageClassifier
+    model: CustomModel
 
     # name of the data module
-    data_module: MNIST
+    # here I am using a custom data module which is a Fashion MNIST dataset
+    # (not split into train and test, single csv file)
+    # you can also use the built-in MNIST data module
+    data_module: CustomDataModule
 
     # training strategy used by Lightning
     # - see https://pytorch-lightning.readthedocs.io/en/stable/extensions/strategy.html#id1 to get an idea of the
@@ -18,25 +21,40 @@ inputs:
     training_strategy: ddp_find_unused_parameters_false
 
     # maximum number of epochs
-    max_epochs: 100
+    max_epochs: 400
+
+    # Set the URI path for the data. Supported paths include:
+    # local: `./<path>
+    #  Blob: wasbs://<container_name>@<account_name>.blob.core.windows.net/<path>
+    # ADLS: abfss://<file_system>@<account_name>.dfs.core.windows.net/<path>
+    # Datastore: azureml://datastores/<data_store_name>/paths/<path>
+    # Data Asset: azureml:<my_data>:<version>
+    # important: the compute cluster needs to have access to the data source
+    # Storage Blob Data Reader role is the minimum required for the compute cluster for blob storage/ADLS
+    # if you are using MNIST inbuilt module, please comment out the input_dataset and batch_size
+    input_dataset:
+        mode: ro_mount
+        path: wasbs://XXX@XXX.blob.core.windows.net/dataset.csv
+        type: uri_file
+    batch_size: 64
 
 # compute cluster on which the command above should be run
 # note: before you can use the compute, it needs to be created first in your AzureML workspace
-compute: multi-node-multi-gpu-lp
+compute: multi-node-multi-gpu-cc
 
 # compute resources
 resources:
     # number of nodes in the cluster above
-    instance_count: 2
+    instance_count: 3
 
 # communication between nodes
 distribution:
-    # when distribution type "pytorch" is used, AML will set up everything required for distributed training of PyTorch 
+    # when distribution type "pytorch" is used, AML will set up everything required for distributed training of PyTorch
     # models, for example the NCCL backend
     type: pytorch
 
     # IMPORTANT: set this value to the number of GPUs per device (depends on your VM size)
-    process_count_per_instance: 1
+    process_count_per_instance: 4
 
 # environment in which the command above should be run in
 # note: It is recommended to use an environment which either is the ACPT image or at least inherits from it. The ACPT
@@ -60,14 +78,15 @@ command: |
         --model ${{inputs.model}} \
         --data-module ${{inputs.data_module}} \
         --training-strategy ${{inputs.training_strategy}} \
-        --max-epochs ${{inputs.max_epochs}}
+        --max-epochs ${{inputs.max_epochs}} \
+        --input_dataset ${{inputs.input_dataset}} \
+        --batch_size ${{inputs.batch_size}}
 
 # local directory that contains the code for the job
 # note: By default, all contents of the specified directory are uploaded to Azure ML. If you want to avoid that specific
 #       files or folders are uploaded, add an .amlignore file to that directory. Contents and syntax is the same as with
 #       .gitignore files.
 code: .
-
 # TODO: update
 # # optional: side services
 # # - the services defined here are services running in parallel to the job

@@ -1,6 +1,7 @@
 # Lightning on Azure Machine Learning v2 using Nebula checkpoints
 
-Demonstrates the use of PyTorch Lightning on Azure Machine Learning (CLI v2).
+Demonstrates the use of PyTorch Lightning on Azure Machine Learning (CLI v2) using Nebula checkpointing. 
+*Work in progress*
 
 ![Azure ML Screenshot](./repo/media/aml-screenshot.png)
 
@@ -17,7 +18,7 @@ Usage:
    recommended, though.
 
 4. Optional customization:
-   - for a custom dataset, place a LightningDataModule script into folder 'data' (similar to MNIST.py).
+   - for a custom dataset, place a LightningDataModule script into folder 'data' (similar to CUSTOMDM.py).
    - for a custom model, place a LightningModule script into folder 'models' (similar to ImageClassifier.py).
    - to support model/data module authoring, you can setup a Python environment with all packages required by running
      `conda env create -n laml --file conda-dev.yaml`.
@@ -33,4 +34,4 @@ Usage:
 
 The code provided uses mlflow autologging and [Nebula checkpointing](https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/machine-learning/reference-checkpoint-performance-for-large-models.md).
 
-As always, feel free to use but don't blame me/us if things go wrong.
+As always, feel free to use but don't blame me/us if things go wrong. 
