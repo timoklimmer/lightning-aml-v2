@@ -1,7 +1,8 @@
 # Lightning on Azure Machine Learning v2 using Nebula checkpoints
 
 Demonstrates the use of PyTorch Lightning on Azure Machine Learning (CLI v2) using Nebula checkpointing. 
-*Work in progress*
+
+*Work in progress*.
 
 ![Azure ML Screenshot](./repo/media/aml-screenshot.png)
 
@@ -18,7 +19,7 @@ Usage:
    recommended, though.
 
 4. Optional customization:
-   - for a custom dataset, place a LightningDataModule script into folder 'data' (similar to CUSTOMDM.py).
+   - for a custom dataset, place a LightningDataModule script into folder 'data' (similar to CustomModule.py).
    - for a custom model, place a LightningModule script into folder 'models' (similar to ImageClassifier.py).
    - to support model/data module authoring, you can setup a Python environment with all packages required by running
      `conda env create -n laml --file conda-dev.yaml`.
@@ -27,8 +28,9 @@ Usage:
 
 5. Run any of the `train_*.yaml` files by clicking the Azure ML icon on top right in VS.Code to train a model in AzureML. Note that you
    need the Azure Machine Learning extension installed in VS.Code to make this button available. Alternatively, run a
-   `az ml job create -g <resource_group> -w <workspace> --file <yaml file> --stream` command in your command line. To
-   debug, you can use VS.Code's launch configurations, e. g. `Debug local DDP`.
+   `az ml job create -g <resource_group> -w <workspace> --file <yaml file> --stream` command in your command line. Please note that
+   Nebula currently only exists in curated ACPT environment on Azure therefore it won't be possible to run scripts without
+   using one of the ACPT containers.
 
 7. Open Azure ML Studio / Jobs and watch the training job progress.
 
