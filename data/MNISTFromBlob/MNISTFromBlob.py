@@ -6,16 +6,22 @@ from torch.utils.data import Dataset, DataLoader
 import torch
 
 
-class CustomDataset(Dataset):
-    def __init__(self, input_dataset, transform=None):
-        self.input_dataset = pd.read_csv(input_dataset)
+class MNISTFromBlobDataset(Dataset):
+    def __init__(self, data_folder, transform=None):
+        # Assuming we want the first CSV file in the folder
+        files = [file for file in os.listdir(data_folder) if file.endswith(".csv")]
+        if not files:
+            raise RuntimeError("No CSV files found in the data folder")
+
+        file_path = os.path.join(data_folder, files[0])
+        self.input_dataset_df = pd.read_csv(file_path)
         self.transform = transform
 
     def __len__(self):
-        return len(self.input_dataset)
+        return len(self.input_dataset_df)
 
     def __getitem__(self, idx):
-        row = self.input_dataset.iloc[idx]
+        row = self.input_dataset_df.iloc[idx]
         label = row[0]
         image_data = (
             row[1:].values.astype("float32").reshape((28, 28, 1))
@@ -30,10 +36,10 @@ class CustomDataset(Dataset):
         return image, label
 
 
-class CustomDataModule(pl.LightningDataModule):
-    def __init__(self, input_dataset, batch_size=32):
+class MNISTFromBlob(pl.LightningDataModule):
+    def __init__(self, data_folder, batch_size=32):
         super().__init__()
-        self.input_dataset = input_dataset
+        self.data_folder = data_folder
         self.batch_size = batch_size
 
     def setup(self, stage=None):
@@ -47,7 +53,7 @@ class CustomDataModule(pl.LightningDataModule):
                 ),  # Mean and std dev as tuples for each channel
             ]
         )
-        full_dataset = CustomDataset(self.input_dataset, transform=transform)
+        full_dataset = MNISTFromBlobDataset(self.data_folder, transform=transform)
 
         # Calculate split sizes for 80-10-10 distribution
         train_size = int(0.8 * len(full_dataset))

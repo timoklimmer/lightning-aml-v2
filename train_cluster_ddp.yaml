@@ -12,7 +12,7 @@ inputs:
     # here I am using a custom data module which is a Fashion MNIST dataset
     # (not split into train and test, single csv file)
     # you can also use the built-in MNIST data module
-    data_module: CustomDataModule
+    data_module: MNISTFromBlob
 
     # training strategy used by Lightning
     # - see https://pytorch-lightning.readthedocs.io/en/stable/extensions/strategy.html#id1 to get an idea of the
@@ -31,11 +31,13 @@ inputs:
     # Data Asset: azureml:<my_data>:<version>
     # important: the compute cluster needs to have access to the data source
     # Storage Blob Data Reader role is the minimum required for the compute cluster for blob storage/ADLS
-    # if you are using MNIST inbuilt module, please comment out the input_dataset and batch_size
-    input_dataset:
+    # if you are using MNIST inbuilt module, please comment out the data_folder and batch_size
+    data_folder:
         mode: ro_mount
-        path: wasbs://XXX@XXX.blob.core.windows.net/dataset.csv
-        type: uri_file
+        path: azureml://datastores/genstorage348/paths/files
+        type: uri_folder
+
+    #set the batch size for ml processing
     batch_size: 64
 
 # compute cluster on which the command above should be run
@@ -72,6 +74,15 @@ environment: azureml:AzureML-ACPT-pytorch-1.13-py38-cuda11.7-gpu@latest
 #environment:
 #    image: mcr.microsoft.com/azureml/curated/acpt-pytorch-1.12-py39-cuda11.6-gpu:2
 
+# You can also define environment variables which will be available in your Python script (e.g., train.py)
+# via the os.environ dictionary;
+# Please refer here for best practices -->
+# https://github.com/Azure/azureml-examples/blob/main/best-practices/largescale-deep-learning/Data-loading/data-loading.md;
+
+# Here's an example of how you can reference a secret from Azure Key Vault in your YAML configuration:
+# environment_variables:
+#    MY_SECRET_API_KEY: ${{secrets.MY_SECRET_NAME}}
+
 # command that should be run by the job
 command: |
     python train.py \
@@ -79,7 +90,7 @@ command: |
         --data-module ${{inputs.data_module}} \
         --training-strategy ${{inputs.training_strategy}} \
         --max-epochs ${{inputs.max_epochs}} \
-        --input_dataset ${{inputs.input_dataset}} \
+        --data_folder ${{inputs.data_folder}} \
         --batch_size ${{inputs.batch_size}}
 
 # local directory that contains the code for the job

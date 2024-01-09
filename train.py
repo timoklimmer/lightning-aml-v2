@@ -61,7 +61,7 @@ parser.add_argument(
     type=int,
     help="Refresh rate for training progress bar",
 )
-parser.add_argument("--input_dataset", type=str, help="Path to the dataset")
+parser.add_argument("--data_folder", type=str, help="Path to the dataset")
 parser.add_argument("--batch_size", type=int, default=32, help="Batch size")
 args = parser.parse_args()
 
@@ -160,15 +160,15 @@ with CodeTimer("Set up trainer"):
 # setup data module
 with CodeTimer("Set up data module"):
     data_module_class = get_data_module_class(args.data_module)
-    if hasattr(args, "input_dataset") and args.input_dataset:
+    if hasattr(args, "data_folder") and args.data_folder:
         data_module = data_module_class(
-            input_dataset=args.input_dataset, batch_size=args.batch_size
+            data_folder=args.data_folder, batch_size=args.batch_size
         )
     # using built-in datasets
     elif args.data_module == "MNIST":
         data_module = data_module_class()
     else:
-        raise ValueError("Please provide the file path argument for the dataset.")
+        raise ValueError("Please provide the data folder argument.")
 
 # setup model
 with CodeTimer("Set up model"):
