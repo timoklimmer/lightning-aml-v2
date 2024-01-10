@@ -34,6 +34,8 @@ Usage:
    Please note that Nebula currently only exists in curated ACPT environment on Azure therefore it won't be possible to run scripts without
    using one of the ACPT containers. Documentation on ACPT containers including best practices can be found [here](https://github.com/Azure/azureml-examples/blob/main/best-practices/largescale-deep-learning/Environment/ACPT.md).
 
+   To run the script with no customized dataset provided, please modify the `train_*.yaml` files to include MNISTfromMNIST as the data-module and ImageClassifier as the model. Also please comment out the data_folder and batch_size parameters. In this way, the inbuilt MNIST dataset will be used.
+
 7. Open Azure ML Studio / Jobs and watch the training job progress.
 
 The code provided uses mlflow autologging and [Nebula checkpointing](https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/machine-learning/reference-checkpoint-performance-for-large-models.md).
