@@ -18,19 +18,21 @@ Usage:
 3. Clone the repo and open the code in an editor of your choice. For best usability, VS.Code or VS.Code for Web are
    recommended, though.
 
-4. Optional customization:
-   - for a custom dataset, place a LightningDataModule script into folder 'data' (similar to CustomModule.py).
-   - for a custom model, place a LightningModule script into folder 'models' (similar to ImageClassifier.py).
+4. Customization:
+   - for a custom dataset, place a LightningDataModule script into folder 'data' (similar to MNISTfromBlob.py).
+   - for a custom model, place a LightningModule script into folder 'models' (similar to CustomModel.py).
    - to support model/data module authoring, you can setup a Python environment with all packages required by running
      `conda env create -n laml --file conda-dev.yaml`.
    - when submitting a job to Azure ML, you may need to adjust the corresponding `train_*.yaml` file before. especially,
      you may also need to create an Azure ML compute cluster and/or create a custom environment.
+   - adjust the `train_*.yaml` files to include your file path to the dataset, name of the compute cluster and cluster capacity. You may also want to adjust the parameters such as batch size and max epochs.
 
 5. Run any of the `train_*.yaml` files by clicking the Azure ML icon on top right in VS.Code to train a model in AzureML. Note that you
    need the Azure Machine Learning extension installed in VS.Code to make this button available. Alternatively, run a
-   `az ml job create -g <resource_group> -w <workspace> --file <yaml file> --stream` command in your command line. Please note that
-   Nebula currently only exists in curated ACPT environment on Azure therefore it won't be possible to run scripts without
-   using one of the ACPT containers.
+   `az ml job create -g <resource_group> -w <workspace> --file <yaml file> --stream` command in your command line. 
+   
+   Please note that Nebula currently only exists in curated ACPT environment on Azure therefore it won't be possible to run scripts without
+   using one of the ACPT containers. Documentation on ACPT containers including best practices can be found [here](https://github.com/Azure/azureml-examples/blob/main/best-practices/largescale-deep-learning/Environment/ACPT.md).
 
 7. Open Azure ML Studio / Jobs and watch the training job progress.
 
