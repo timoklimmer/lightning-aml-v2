@@ -5,12 +5,11 @@ import os
 import sys
 
 import mlflow
+import nebulaml as nm
 import pytorch_lightning as pl
 import torch
-import nebulaml as nm
 from pytorch_lightning import loggers as pl_loggers
-from pytorch_lightning.callbacks import ModelCheckpoint
-from pytorch_lightning.callbacks import TQDMProgressBar
+from pytorch_lightning.callbacks import ModelCheckpoint, TQDMProgressBar
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.strategies import DeepSpeedStrategy, StrategyRegistry
 
@@ -51,9 +50,7 @@ parser.add_argument(
     help="Training strategy for Lightning.",
 )
 # -- max-epochs
-parser.add_argument(
-    "--max-epochs", type=int, default=10, help="Maximum number of epochs to train."
-)
+parser.add_argument("--max-epochs", type=int, default=10, help="Maximum number of epochs to train.")
 # -- progress-bar-refresh-rate
 parser.add_argument(
     "--progress-bar-refresh-rate",
@@ -70,9 +67,7 @@ args = parser.parse_args()
 # number of nodes
 number_nodes = int(os.environ.get("AZUREML_NODE_COUNT", 1))
 # number of GPUs/"devices" per node
-number_devices_per_node = int(
-    os.environ.get("AZ_BATCHAI_GPU_COUNT", torch.cuda.device_count())
-)
+number_devices_per_node = int(os.environ.get("AZ_BATCHAI_GPU_COUNT", torch.cuda.device_count()))
 # are we running in a Compute Cluster?
 is_compute_cluster = "AZUREML_RUN_ID" in os.environ
 # are we running on the head node?
@@ -124,9 +119,7 @@ trainer_config = {
     "num_nodes": number_nodes,
     "devices": number_devices_per_node,
     "max_epochs": args.max_epochs,
-    "logger": pl_loggers.TensorBoardLogger(
-        save_dir=("outputs" if is_compute_cluster else "@logs")
-    ),
+    "logger": pl_loggers.TensorBoardLogger(save_dir=("outputs" if is_compute_cluster else "@logs")),
     "callbacks": [
         TQDMProgressBar(refresh_rate=args.progress_bar_refresh_rate),
         EarlyStopping(monitor="val_loss", mode="min", patience=30),
@@ -144,9 +137,7 @@ if args.training_strategy == "deepspeed" and os.path.exists("ds_config.json"):
     print(json.dumps(deepspeed_config, indent=4))
     print("")
     trainer_config["strategy"] = nm.NebulaDeepspeedStrategy(config=deepspeed_config)
-    trainer_config["callbacks"].append(
-        ModelCheckpoint(filename="{epoch}", every_n_epochs=10)
-    )
+    trainer_config["callbacks"].append(ModelCheckpoint(filename="{epoch}", every_n_epochs=10))
 else:
     config_params = dict()
     config_params["persistent_storage_path"] = os.path.abspath("./outputs")
@@ -161,9 +152,7 @@ with CodeTimer("Set up trainer"):
 with CodeTimer("Set up data module"):
     data_module_class = get_data_module_class(args.data_module)
     if hasattr(args, "data_folder") and args.data_folder:
-        data_module = data_module_class(
-            data_folder=args.data_folder, batch_size=args.batch_size
-        )
+        data_module = data_module_class(data_folder=args.data_folder, batch_size=args.batch_size)
     # using built-in datasets
     elif args.data_module == "MNIST":
         data_module = data_module_class()
