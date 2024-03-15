@@ -10,5 +10,12 @@
             "eps": 1e-8,
             "weight_decay": 3e-7
         }
+    },
+    "nebula": {
+        "enabled": false,
+        "persistent_storage_path": "./outputs",
+        "persistent_time_interval": 100,
+        "num_of_version_in_retention": 2,
+        "enable_nebula_load": true
     }
 }

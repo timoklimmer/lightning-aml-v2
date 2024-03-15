@@ -1,5 +1,4 @@
 import argparse
-import inspect
 import json
 import os
 import sys
@@ -7,8 +6,9 @@ import sys
 import mlflow
 import pytorch_lightning as pl
 import torch
+import nebulaml as nm
 from pytorch_lightning import loggers as pl_loggers
-from pytorch_lightning.callbacks import TQDMProgressBar
+from pytorch_lightning.callbacks import ModelCheckpoint, TQDMProgressBar
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.strategies import DeepSpeedStrategy, StrategyRegistry
 
@@ -59,8 +59,11 @@ parser.add_argument(
     type=int,
     help="Refresh rate for training progress bar",
 )
+parser.add_argument("--data_folder", type=str, help="Path to the dataset")
+parser.add_argument("--batch_size", type=int, default=32, help="Batch size")
+parser.add_argument("--enable_nebula", default="False", help="Enable Nebula")
 args = parser.parse_args()
-
+enable_nebula = args.enable_nebula.lower() in ("yes", "true", "t", "y", "1")
 
 # collect some infos about the environment we are running in
 # number of nodes
@@ -115,49 +118,86 @@ ensure_model_class_exists(args.model)
 
 # use custom DeepSpeed configuration when available
 effective_strategy = args.training_strategy
+
+
+# Define helper function to update the trainer configuration with Nebula settings
+def configure_nebula(trainer_config, deepspeed_config=None):
+    if deepspeed_config:
+        deepspeed_config["nebula"] = {
+            "enabled": True,
+            "persistent_storage_path": os.path.abspath(
+                deepspeed_config.get("nebula", {}).get(
+                    "persistent_storage_path", "./outputs"
+                )
+            ),
+        }
+        print(json.dumps(deepspeed_config, indent=4))
+        trainer_config["strategy"] = nm.NebulaDeepspeedStrategy(config=deepspeed_config)
+    else:
+        print("using Nebula")
+        print("--------------")
+        config_params = {
+            "persistent_storage_path": os.path.abspath("./outputs"),
+            "persistent_time_interval": 100,
+        }
+        trainer_config["callbacks"].append(
+            nm.NebulaCallback(config_params=config_params)
+        )
+        trainer_config["plugins"] = [nm.NebulaCheckpointIO()]
+
+
+trainer_config = {
+    "accelerator": "gpu",
+    "num_nodes": number_nodes,
+    "devices": number_devices_per_node,
+    "max_epochs": args.max_epochs,
+    "logger": pl_loggers.TensorBoardLogger(
+        save_dir=("outputs" if is_compute_cluster else "@logs")
+    ),
+    "callbacks": [
+        TQDMProgressBar(refresh_rate=args.progress_bar_refresh_rate),
+        EarlyStopping(monitor="val_loss", mode="min", patience=30),
+    ],
+}
+
+# Default DeepSpeed configuration
 if args.training_strategy == "deepspeed" and os.path.exists("ds_config.json"):
     with open("ds_config.json") as deepspeed_config_file:
         deepspeed_config = json.load(deepspeed_config_file)
-    print("ds_config.json")
-    print("--------------")
-    print(json.dumps(deepspeed_config, indent=4))
-    print("")
-    effective_strategy = DeepSpeedStrategy(config=deepspeed_config)
-
-# setup trainer
-with CodeTimer("Set up trainer"):
-    trainer = pl.Trainer(
-        accelerator="gpu",
-        num_nodes=number_nodes,
-        devices=number_devices_per_node,
-        max_epochs=args.max_epochs,
-        strategy=effective_strategy,
-        logger=pl_loggers.TensorBoardLogger(
-            save_dir=("outputs" if is_compute_cluster else "@logs")
-        ),
-        callbacks=[
-            TQDMProgressBar(refresh_rate=args.progress_bar_refresh_rate),
-            EarlyStopping(monitor="val_loss", mode="min", patience=10),
-        ],
+    trainer_config["strategy"] = DeepSpeedStrategy(config=deepspeed_config)
+    trainer_config["callbacks"].append(
+        ModelCheckpoint(filename="{epoch}", every_n_epochs=10)
     )
+else:
+    deepspeed_config = None
+
+# Apply Nebula configurations if the flag is set
+if enable_nebula:
+    configure_nebula(trainer_config, deepspeed_config)
+
+with CodeTimer("Set up trainer"):
+    trainer = pl.Trainer(**trainer_config)
 
 # setup data module
 with CodeTimer("Set up data module"):
     data_module_class = get_data_module_class(args.data_module)
-    data_module = (
-        data_module_class(args)
-        if "args" in inspect.signature(data_module_class.__init__).parameters
-        else data_module_class()
-    )
+    if hasattr(args, "data_folder") and args.data_folder:
+        data_module = data_module_class(
+            data_folder=args.data_folder, batch_size=args.batch_size
+        )
+    # using built-in datasets
+    elif args.data_module == "MNIST":
+        data_module = data_module_class()
+    else:
+        raise ValueError("Please provide the data folder argument.")
 
 # setup model
 with CodeTimer("Set up model"):
     model_class = get_model_class(args.model)
-    model = (
-        model_class(args)
-        if "args" in inspect.signature(model_class.__init__).parameters
-        else model_class()
-    )
+    # Check if there are additional arguments to pass to the model class
+    model_args = vars(args) if hasattr(args, "model_args") and args.model_args else {}
+    # Instantiate the model with or without arguments based on the condition
+    model = model_class(**model_args) if model_args else model_class()
 
 # train model
 with mlflow.start_run() as run:
