@@ -12,7 +12,7 @@
         }
     },
     "nebula": {
-        "enabled": true,
+        "enabled": false,
         "persistent_storage_path": "./outputs",
         "persistent_time_interval": 100,
         "num_of_version_in_retention": 2,

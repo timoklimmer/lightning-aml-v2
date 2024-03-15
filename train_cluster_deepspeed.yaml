@@ -6,7 +6,7 @@ experiment_name: pl-deepspeed
 # several input parameters for your training job
 inputs:
     # name of the model, ensure that there is a corresponding Python script in folder 'models'
-    model: CustomModel
+    model: ImageClassifier
 
     # name of the data module
     # here I am using a custom data module which is a Fashion MNIST dataset
@@ -47,6 +47,9 @@ inputs:
 
     #set the batch size for ml processing
     batch_size: 64
+    #set to true to enable Nebula checkpointing
+    enable_nebula: False
+
 
 # compute cluster on which the command above should be run
 # note: before you can use the compute, it needs to be created first in your AzureML workspace
@@ -99,7 +102,8 @@ command: |
         --training-strategy ${{inputs.training_strategy}} \
         --max-epochs ${{inputs.max_epochs}} \
         --data_folder ${{inputs.data_folder}} \
-        --batch_size ${{inputs.batch_size}}
+        --batch_size ${{inputs.batch_size}} \
+        --enable_nebula ${{inputs.enable_nebula}}
 
 # local directory that contains the code for the job
 # note: By default, all contents of the specified directory are uploaded to Azure ML. If you want to avoid that specific
